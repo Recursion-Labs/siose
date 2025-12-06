@@ -1,9 +1,9 @@
 package me.samarthh.commands;
 
 import me.samarthh.managers.UserManager;
+import okhttp3.*;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import okhttp3.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;

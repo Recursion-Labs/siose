@@ -1,0 +1,17 @@
+services:
+  paper:
+    image: eclipse-temurin:21-jdk
+    container_name: siose-mc-dev
+    working_dir: /server
+    command: ["java", "-Xms2G", "-Xmx2G", "-jar", "paper.jar", "--nogui"]
+    ports:
+      - "25565:25565"
+
+    volumes:
+      - ./paper.jar:/server/paper.jar
+      - ./eula.txt:/server/eula.txt
+      - ./plugins:/server/plugins
+      - ./world:/server/world
+
+    stdin_open: true
+    tty: true
