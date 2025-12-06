@@ -86,6 +86,7 @@ logs/
 crash-reports/
 eula.txt
 server.properties
+!docker/mc-dev/server.properties
 usercache.json
 banned-ips.json
 banned-players.json
@@ -116,6 +117,7 @@ docker/mc-dev/world_nether/
 docker/mc-dev/world_the_end/
 docker/mc-dev/plugins/
 !docker/mc-dev/plugins/siose*.jar
+!docker/mc-dev/server.properties
 docker/mc-dev/*.log
 docker/mc-dev/usercache.json
 

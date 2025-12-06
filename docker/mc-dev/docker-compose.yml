@@ -10,6 +10,7 @@ services:
     volumes:
       - ./paper.jar:/server/paper.jar
       - ./eula.txt:/server/eula.txt
+      - ./server.properties:/server/server.properties
       - ./plugins:/server/plugins
       - ./world:/server/world
 
