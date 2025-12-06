@@ -12,14 +12,16 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
         getLogger().info("Plugin enabled!");
 
+        String baseUrl = getConfig().getString("api.base-url", "https://api.example.com");
         userManager = new UserManager();
 
         // Register commands
-        this.getCommand("getdata").setExecutor(new GetDataCommand(userManager));
-        this.getCommand("register").setExecutor(new RegisterCommand(userManager));
-        this.getCommand("login").setExecutor(new LoginCommand(userManager));
+        this.getCommand("getdata").setExecutor(new GetDataCommand(userManager, baseUrl));
+        this.getCommand("register").setExecutor(new RegisterCommand(userManager, baseUrl));
+        this.getCommand("login").setExecutor(new LoginCommand(userManager, baseUrl));
     }
 
     @Override
