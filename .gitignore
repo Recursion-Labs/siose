@@ -127,3 +127,5 @@ docker/mc-dev/usercache.json
 *.swp
 *.swo
 *~
+
+.env
