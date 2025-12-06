@@ -2,8 +2,11 @@ package me.samarthh.managers;
 
 import java.sql.*;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UserManager {
+    private static final Logger logger = LoggerFactory.getLogger(UserManager.class);
     private Connection connection;
 
     public UserManager() {
@@ -11,7 +14,7 @@ public class UserManager {
             connection = DriverManager.getConnection("jdbc:sqlite:users.db");
             createTable();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Failed to initialize database: {}", e.getMessage(), e);
         }
     }
 
@@ -35,7 +38,7 @@ public class UserManager {
                 return rs.getInt("authenticated") == 1;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error checking authentication for {}: {}", uuid, e.getMessage());
         }
         return false;
     }
@@ -49,7 +52,7 @@ public class UserManager {
                 return rs.getString("token");
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error retrieving token for {}: {}", uuid, e.getMessage());
         }
         return null;
     }
@@ -61,7 +64,7 @@ public class UserManager {
             pstmt.setString(2, token);
             pstmt.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error setting token for {}: {}", uuid, e.getMessage());
         }
     }
 
@@ -71,7 +74,7 @@ public class UserManager {
                 connection.close();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error closing database connection: {}", e.getMessage());
         }
     }
 }

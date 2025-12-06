@@ -1,5 +1,6 @@
 package me.samarthh.commands;
 
+import me.samarthh.api.SioseApiClient;
 import me.samarthh.managers.UserManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -11,9 +12,11 @@ import java.util.UUID;
 public class LoginCommand implements CommandExecutor {
 
     private final UserManager userManager;
+    private final SioseApiClient apiClient;
 
-    public LoginCommand(UserManager userManager) {
+    public LoginCommand(UserManager userManager, String baseUrl) {
         this.userManager = userManager;
+        this.apiClient = new SioseApiClient(baseUrl);
     }
 
     @Override
@@ -32,8 +35,22 @@ public class LoginCommand implements CommandExecutor {
         }
 
         String token = args[0];
-        userManager.setToken(uuid, token);
-        player.sendMessage("Successfully logged in! You can now use /getdata.");
+        player.sendMessage("Validating token...");
+
+        // Use the API client to validate the token
+        apiClient.validateToken(uuid.toString(), token)
+                .thenAccept(response -> {
+                    if (response.isValid()) {
+                        userManager.setToken(uuid, token);
+                        player.sendMessage("Successfully logged in! You can now use /getdata.");
+                    } else {
+                        player.sendMessage("Invalid token: " + response.getMessage());
+                    }
+                })
+                .exceptionally(throwable -> {
+                    player.sendMessage("Error during login: " + throwable.getMessage());
+                    return null;
+                });
 
         return true;
     }

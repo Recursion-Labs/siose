@@ -1,24 +1,22 @@
 package me.samarthh.commands;
 
+import me.samarthh.api.SioseApiClient;
 import me.samarthh.managers.UserManager;
-import okhttp3.*;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.io.IOException;
 import java.util.UUID;
 
 public class RegisterCommand implements CommandExecutor {
 
-    private final OkHttpClient client = new OkHttpClient();
     private final UserManager userManager;
+    private final SioseApiClient apiClient;
 
-    public RegisterCommand(UserManager userManager) {
+    public RegisterCommand(UserManager userManager, String baseUrl) {
         this.userManager = userManager;
+        this.apiClient = new SioseApiClient(baseUrl);
     }
 
     @Override
@@ -36,30 +34,29 @@ public class RegisterCommand implements CommandExecutor {
             return true;
         }
 
-        // Hit the registration API
-        new Thread(() -> {
-            try {
-                String url = "https://your-api-endpoint.com/register"; // Replace with actual API
-                JsonObject json = new JsonObject();
-                json.addProperty("uuid", uuid.toString());
-                json.addProperty("username", player.getName());
+        player.sendMessage("Initiating registration...");
 
-                RequestBody body = RequestBody.create(json.toString(), MediaType.get("application/json"));
-                Request request = new Request.Builder().url(url).post(body).build();
-                Response response = client.newCall(request).execute();
-
-                if (response.isSuccessful()) {
-                    String responseBody = response.body().string();
-                    JsonObject responseJson = JsonParser.parseString(responseBody).getAsJsonObject();
-                    String link = responseJson.get("link").getAsString(); // Assuming API returns a link
-                    player.sendMessage("Registration initiated! Visit: " + link + " and use /login <token> to complete.");
-                } else {
-                    player.sendMessage("Failed to register: " + response.code());
-                }
-            } catch (IOException e) {
-                player.sendMessage("Error during registration: " + e.getMessage());
-            }
-        }).start();
+        // Use the API client for registration
+        apiClient.registerUser(uuid.toString(), player.getName())
+                .thenAccept(response -> {
+                    if (response.isSuccess()) {
+                        String message = "Registration initiated!";
+                        if (response.getRegistrationUrl() != null) {
+                            message += " Visit: " + response.getRegistrationUrl();
+                        }
+                        if (response.getRegistrationCode() != null) {
+                            message += " Code: " + response.getRegistrationCode();
+                        }
+                        message += " Then use /login <token> to complete authentication.";
+                        player.sendMessage(message);
+                    } else {
+                        player.sendMessage("Registration failed: " + response.getMessage());
+                    }
+                })
+                .exceptionally(throwable -> {
+                    player.sendMessage("Error during registration: " + throwable.getMessage());
+                    return null;
+                });
 
         return true;
     }

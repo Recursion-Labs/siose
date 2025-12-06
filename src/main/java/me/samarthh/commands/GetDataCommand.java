@@ -1,24 +1,22 @@
 package me.samarthh.commands;
 
+import me.samarthh.api.SioseApiClient;
 import me.samarthh.managers.UserManager;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.io.IOException;
-
 public class GetDataCommand implements CommandExecutor {
 
-    private final OkHttpClient client = new OkHttpClient();
     private final UserManager userManager;
+    private final SioseApiClient apiClient;
 
-    public GetDataCommand(UserManager userManager) {
+    public GetDataCommand(UserManager userManager, String baseUrl) {
         this.userManager = userManager;
+        this.apiClient = new SioseApiClient(baseUrl);
     }
+    
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -35,27 +33,21 @@ public class GetDataCommand implements CommandExecutor {
         }
 
         String token = userManager.getToken(player.getUniqueId());
+        player.sendMessage("Fetching data...");
 
-        // Run API call asynchronously to avoid blocking the main thread
-        new Thread(() -> {
-            try {
-                String url = "https://your-api-endpoint.com/data"; // Replace with actual API
-                Request request = new Request.Builder()
-                        .url(url)
-                        .addHeader("Authorization", "Bearer " + token)
-                        .build();
-                Response response = client.newCall(request).execute();
-
-                if (response.isSuccessful()) {
-                    String data = response.body().string();
-                    player.sendMessage("API Response: " + data);
-                } else {
-                    player.sendMessage("Failed to fetch data: " + response.code());
-                }
-            } catch (IOException e) {
-                player.sendMessage("Error fetching data: " + e.getMessage());
-            }
-        }).start();
+        // Use the API client to fetch data
+        apiClient.fetchData(token)
+                .thenAccept(response -> {
+                    if (response.isSuccess()) {
+                        player.sendMessage("Data received: " + response.getData());
+                    } else {
+                        player.sendMessage("Failed to fetch data: " + response.getMessage());
+                    }
+                })
+                .exceptionally(throwable -> {
+                    player.sendMessage("Error fetching data: " + throwable.getMessage());
+                    return null;
+                });
 
         return true;
     }
