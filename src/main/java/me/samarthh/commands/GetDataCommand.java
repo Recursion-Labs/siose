@@ -41,12 +41,8 @@ public class GetDataCommand implements CommandExecutor {
                     StringBuilder sb = new StringBuilder();
                     sb.append("Your Profile:\n");
                     sb.append("Email: ").append(user.getEmail()).append("\n");
-                    if (user.getUsername() != null) {
-                        sb.append("Name: ").append(user.getUsername()).append("\n");
-                    }
-                    sb.append("Minecraft Name: ").append(user.getUsername()).append("\n");
-                    sb.append("Role: ").append(user.getStatus()).append("\n");
-                    sb.append("Joined: ").append(user.getRegisteredAt());
+                    sb.append("Role: ").append(user.getRole()).append("\n");
+                    sb.append("Joined: ").append(user.getCreatedAt());
                     player.sendMessage(sb.toString());
                 })
                 .exceptionally(throwable -> {
