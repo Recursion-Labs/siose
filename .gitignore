@@ -129,3 +129,6 @@ docker/mc-dev/usercache.json
 *~
 
 .env
+
+
+__test__

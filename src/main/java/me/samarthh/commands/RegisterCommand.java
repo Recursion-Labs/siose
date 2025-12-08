@@ -30,9 +30,7 @@ public class RegisterCommand implements CommandExecutor {
             player.sendMessage("You are already authenticated!");
             return true;
         }
-
         player.sendMessage("Please visit: https://brickchain.samarthh.me/register to register your account.");
-
         return true;
     }
 }
