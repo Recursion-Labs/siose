@@ -31,7 +31,7 @@ public class RegisterCommand implements CommandExecutor {
             return true;
         }
 
-        player.sendMessage("Please visit: https://frontend.com/register to register.");
+        player.sendMessage("Please visit: https://brickchain.samarthh.me/register to register your account.");
 
         return true;
     }
