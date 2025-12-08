@@ -29,6 +29,11 @@ public class LoginCommand implements CommandExecutor {
         Player player = (Player) sender;
         UUID uuid = player.getUniqueId();
 
+        if (userManager.isAuthenticated(uuid)) {
+            player.sendMessage("You are already authenticated!");
+            return true;
+        }
+        
         if (args.length != 1) {
             player.sendMessage("Usage: /login <token>");
             return true;
@@ -40,7 +45,6 @@ public class LoginCommand implements CommandExecutor {
             return true;
         }
         player.sendMessage("Logging in...");
-
         // Use the API client to login
         apiClient.login(uuid.toString(), player.getName(), token)
                 .thenAccept(response -> {
@@ -55,7 +59,6 @@ public class LoginCommand implements CommandExecutor {
                     player.sendMessage("Error during login: " + throwable.getMessage());
                     return null;
                 });
-
         return true;
     }
 }
