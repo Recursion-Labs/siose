@@ -13,3 +13,6 @@ commands:
   login:
     description: Login with your token
     usage: /<command> <token>
+  logout:
+    description: Logout and clear authentication
+    usage: /<command>
