@@ -11,12 +11,11 @@ import java.util.concurrent.CompletableFuture;
 
 public class SioseApiClient {
     private static final Logger logger = LoggerFactory.getLogger(SioseApiClient.class);
-    private final String baseUrl;
+    private final String baseUrl = "http://host.docker.internal:3000/v1";
     private final OkHttpClient client;
     private final Gson gson;
 
-    public SioseApiClient(String baseUrl) {
-        this.baseUrl = baseUrl;
+    public SioseApiClient() {
         this.client = new OkHttpClient.Builder()
                 .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
                 .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
@@ -80,7 +79,7 @@ public class SioseApiClient {
 
                 RequestBody body = RequestBody.create(json.toString(), MediaType.get("application/json"));
                 Request request = new Request.Builder()
-                        .url("http://host.docker.internal:3000/v1/auth/minecraft/login")
+                        .url(this.baseUrl + "/auth/minecraft/login")
                         .post(body)
                         .build();
 
@@ -102,22 +101,23 @@ public class SioseApiClient {
     }
 
     /**
-     * Fetch data with authentication
+     * Fetch user data with authentication
      * @param token User's authentication token
-     * @return CompletableFuture with data response
+     * @return CompletableFuture with user data
      */
-    public CompletableFuture<DataResponse> fetchData(String token) {
+    public CompletableFuture<UserData> fetchData(String token) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Request request = new Request.Builder()
-                        .url(this.baseUrl + "/data")
-                        .addHeader("Authorization", "Bearer " + token)
+                        .url(this.baseUrl + "/user/@me")
+                        .addHeader("x-minecraft-token", token)
                         .build();
 
                 try (Response response = client.newCall(request).execute()) {
                     if (response.isSuccessful() && response.body() != null) {
                         String responseBody = response.body().string();
-                        return gson.fromJson(responseBody, DataResponse.class);
+                        UserWrapper wrapper = gson.fromJson(responseBody, UserWrapper.class);
+                        return wrapper.getUser();
                     } else {
                         logger.warn("Data fetch failed with code: {}", response.code());
                         throw new ApiException("Data fetch failed: " + response.code());
@@ -139,8 +139,8 @@ public class SioseApiClient {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Request request = new Request.Builder()
-                        .url(this.baseUrl + "/profile")
-                        .addHeader("Authorization", "Bearer " + token)
+                        .url(this.baseUrl + "/user/@me")
+                        .addHeader("x-minecraft-token", token)
                         .build();
 
                 try (Response response = client.newCall(request).execute()) {
@@ -160,6 +160,13 @@ public class SioseApiClient {
     }
 
     // Response DTOs
+    public static class UserWrapper {
+        private UserData user;
+
+        public UserData getUser() { return user; }
+        public void setUser(UserData user) { this.user = user; }
+    }
+
     public static class RegistrationResponse {
         private boolean success;
         private String message;
@@ -199,7 +206,7 @@ public class SioseApiClient {
     public static class DataResponse {
         private boolean success;
         private String message;
-        private Object data; // Can be more specific based on your API
+        private UserData data;
 
         // Getters and setters
         public boolean isSuccess() { return success; }
@@ -208,8 +215,8 @@ public class SioseApiClient {
         public String getMessage() { return message; }
         public void setMessage(String message) { this.message = message; }
 
-        public Object getData() { return data; }
-        public void setData(Object data) { this.data = data; }
+        public UserData getData() { return data; }
+        public void setData(UserData data) { this.data = data; }
     }
 
     public static class ProfileResponse {
