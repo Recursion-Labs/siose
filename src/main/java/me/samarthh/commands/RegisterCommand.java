@@ -1,5 +1,6 @@
 package me.samarthh.commands;
 
+import me.samarthh.api.SioseApiClient;
 import me.samarthh.managers.UserManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -11,8 +12,7 @@ import java.util.UUID;
 public class RegisterCommand implements CommandExecutor {
 
     private final UserManager userManager;
-
-    public RegisterCommand(UserManager userManager) {
+    public RegisterCommand(UserManager userManager, SioseApiClient apiClient) {
         this.userManager = userManager;
     }
 

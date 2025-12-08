@@ -1,5 +1,6 @@
 package me.samarthh;
 
+import me.samarthh.api.SioseApiClient;
 import me.samarthh.commands.GetDataCommand;
 import me.samarthh.commands.RegisterCommand;
 import me.samarthh.commands.LoginCommand;
@@ -31,13 +32,14 @@ public class Main extends JavaPlugin {
 
         //String baseUrl = getConfig().getString("api.base-url", "http://host.docker.internal:3000/v1");
         userManager = new UserManager();
+        SioseApiClient apiClient = new SioseApiClient();
 
         // Register commands
-        this.getCommand("getdata").setExecutor(new GetDataCommand(userManager));
-        this.getCommand("register").setExecutor(new RegisterCommand(userManager));
-        this.getCommand("login").setExecutor(new LoginCommand(userManager));
+        this.getCommand("getdata").setExecutor(new GetDataCommand(userManager, apiClient));
+        this.getCommand("register").setExecutor(new RegisterCommand(userManager, apiClient));
+        this.getCommand("login").setExecutor(new LoginCommand(userManager, apiClient));
         this.getCommand("logout").setExecutor(new LogoutCommand(userManager));
-        this.getCommand("requestproperty").setExecutor(new RequestProperty(userManager));
+        this.getCommand("requestproperty").setExecutor(new RequestProperty(userManager, apiClient));
 
         // Register events
         PropertyListener propertyListener = new PropertyListener(userManager, propertyLocations, unbreakableBlocks, this);

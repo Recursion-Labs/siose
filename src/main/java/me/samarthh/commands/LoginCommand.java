@@ -14,9 +14,9 @@ public class LoginCommand implements CommandExecutor {
     private final UserManager userManager;
     private final SioseApiClient apiClient;
 
-    public LoginCommand(UserManager userManager) {
+    public LoginCommand(UserManager userManager, SioseApiClient apiClient) {
         this.userManager = userManager;
-        this.apiClient = new SioseApiClient();
+        this.apiClient = apiClient;
     }
 
     @Override

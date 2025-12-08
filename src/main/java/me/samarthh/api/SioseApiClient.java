@@ -291,6 +291,48 @@ public class SioseApiClient {
         public void setRole(String role) { this.role = role; }
     }
 
+    /**
+     * Check property request eligibility
+     * @param token User's authentication token
+     * @return CompletableFuture with eligibility response
+     */
+    public CompletableFuture<EligibilityResponse> checkEligibility(String token) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Request request = new Request.Builder()
+                        .url(this.baseUrl + "/user/property-requests/eligibility")
+                        .addHeader("x-minecraft-token", token)
+                        .get()
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        String responseBody = response.body().string();
+                        return gson.fromJson(responseBody, EligibilityResponse.class);
+                    } else {
+                        logger.warn("Eligibility check failed with code: {}", response.code());
+                        throw new ApiException("Eligibility check failed: " + response.code());
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("Network error during eligibility check: {}", e.getMessage());
+                throw new ApiException("Network error during eligibility check: " + e.getMessage());
+            }
+        });
+    }
+
+    public static class EligibilityResponse {
+        private boolean eligible;
+        private String message;
+
+        // Getters and setters
+        public boolean isEligible() { return eligible; }
+        public void setEligible(boolean eligible) { this.eligible = eligible; }
+
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+    }
+
     public static class PropertyRequestResponse {
         private boolean success;
         private String message;
