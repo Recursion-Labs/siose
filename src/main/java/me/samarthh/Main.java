@@ -16,13 +16,13 @@ public class Main extends JavaPlugin {
         saveDefaultConfig();
         getLogger().info("Plugin enabled!");
 
-        String baseUrl = getConfig().getString("api.base-url", "https://api.example.com");
+        //String baseUrl = getConfig().getString("api.base-url", "http://host.docker.internal:3000/v1");
         userManager = new UserManager();
 
         // Register commands
-        this.getCommand("getdata").setExecutor(new GetDataCommand(userManager, baseUrl));
+        this.getCommand("getdata").setExecutor(new GetDataCommand(userManager));
         this.getCommand("register").setExecutor(new RegisterCommand(userManager));
-        this.getCommand("login").setExecutor(new LoginCommand(userManager, baseUrl));
+        this.getCommand("login").setExecutor(new LoginCommand(userManager));
         this.getCommand("logout").setExecutor(new LogoutCommand(userManager));
     }
 
