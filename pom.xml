@@ -94,6 +94,11 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                            <filters>
+                            </filters>
                             <relocations>
                                 <relocation>
                                     <pattern>okhttp3</pattern>
@@ -102,10 +107,6 @@
                                 <relocation>
                                     <pattern>com.google.gson</pattern>
                                     <shadedPattern>me.samarthh.shaded.gson</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.slf4j</pattern>
-                                    <shadedPattern>me.samarthh.shaded.slf4j</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>org.xerial</pattern>
