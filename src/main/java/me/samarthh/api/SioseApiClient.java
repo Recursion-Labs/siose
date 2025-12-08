@@ -158,8 +158,40 @@ public class SioseApiClient {
             }
         });
     }
+    /**
+     * Request a property
+     * @param token User's authentication token
+     * @param entity Property data
+     * @return CompletableFuture with response
+     */
+    public CompletableFuture<PropertyRequestResponse> requestProperty(String token, String entity) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                JsonObject json = new JsonObject();
+                json.addProperty("entity", entity);
 
-    // Response DTOs
+                RequestBody body = RequestBody.create(json.toString(), MediaType.get("application/json"));
+                Request request = new Request.Builder()
+                        .url(this.baseUrl + "/user/property-requests")
+                        .addHeader("x-minecraft-token", token)
+                        .post(body)
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        String responseBody = response.body().string();
+                        return gson.fromJson(responseBody, PropertyRequestResponse.class);
+                    } else {
+                        logger.warn("Property request failed with code: {}", response.code());
+                        throw new ApiException("Property request failed: " + response.code());
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("Network error during property request: {}", e.getMessage());
+                throw new ApiException("Network error during property request: " + e.getMessage());
+            }
+        });
+    }
     public static class UserWrapper {
         private UserData user;
 
@@ -257,6 +289,18 @@ public class SioseApiClient {
 
         public String getRole() { return role; }
         public void setRole(String role) { this.role = role; }
+    }
+
+    public static class PropertyRequestResponse {
+        private boolean success;
+        private String message;
+
+        // Getters and setters
+        public boolean isSuccess() { return success; }
+        public void setSuccess(boolean success) { this.success = success; }
+
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
     }
 
     public static class ApiException extends RuntimeException {
