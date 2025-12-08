@@ -35,16 +35,20 @@ public class LoginCommand implements CommandExecutor {
         }
 
         String token = args[0];
-        player.sendMessage("Validating token...");
+        if (token == null || token.trim().isEmpty()) {
+            player.sendMessage("Invalid token provided.");
+            return true;
+        }
+        player.sendMessage("Logging in...");
 
-        // Use the API client to validate the token
-        apiClient.validateToken(uuid.toString(), token)
+        // Use the API client to login
+        apiClient.login(uuid.toString(), player.getName(), token)
                 .thenAccept(response -> {
                     if (response.isValid()) {
                         userManager.setToken(uuid, token);
                         player.sendMessage("Successfully logged in! You can now use /getdata.");
                     } else {
-                        player.sendMessage("Invalid token: " + response.getMessage());
+                        player.sendMessage("Login failed: " + response.getMessage());
                     }
                 })
                 .exceptionally(throwable -> {
