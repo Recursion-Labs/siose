@@ -40,7 +40,7 @@ public class Main extends JavaPlugin {
         this.getCommand("requestproperty").setExecutor(new RequestProperty(userManager));
 
         // Register events
-        PropertyListener propertyListener = new PropertyListener(userManager, propertyLocations, unbreakableBlocks);
+        PropertyListener propertyListener = new PropertyListener(userManager, propertyLocations, unbreakableBlocks, this);
         getServer().getPluginManager().registerEvents(propertyListener, this);
     }
 
