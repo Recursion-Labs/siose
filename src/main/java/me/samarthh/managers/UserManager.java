@@ -68,6 +68,16 @@ public class UserManager {
         }
     }
 
+    public void logout(UUID uuid) {
+        String sql = "UPDATE users SET authenticated = 0, token = NULL WHERE uuid = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, uuid.toString());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            logger.error("Error logging out {}: {}", uuid, e.getMessage());
+        }
+    }
+
     public void close() {
         try {
             if (connection != null) {
