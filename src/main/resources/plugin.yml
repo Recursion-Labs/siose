@@ -16,3 +16,6 @@ commands:
   logout:
     description: Logout and clear authentication
     usage: /<command>
+  requestproperty:
+    description: Request a property by placing 3 enchanted fence blocks
+    usage: /<command>
