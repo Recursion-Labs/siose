@@ -239,8 +239,8 @@ public class SioseApiClient {
         private String uuid;
         private String username;
         private String email;
-        private long registeredAt;
-        private String status;
+        private String createdAt;
+        private String role;
 
         // Getters and setters
         public String getUuid() { return uuid; }
@@ -252,11 +252,11 @@ public class SioseApiClient {
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
 
-        public long getRegisteredAt() { return registeredAt; }
-        public void setRegisteredAt(long registeredAt) { this.registeredAt = registeredAt; }
+        public String getCreatedAt() { return createdAt; }
+        public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 
-        public String getStatus() { return status; }
-        public void setStatus(String status) { this.status = status; }
+        public String getRole() { return role; }
+        public void setRole(String role) { this.role = role; }
     }
 
     public static class ApiException extends RuntimeException {
