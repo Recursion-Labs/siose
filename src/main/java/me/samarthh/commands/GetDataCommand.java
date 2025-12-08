@@ -12,9 +12,9 @@ public class GetDataCommand implements CommandExecutor {
     private final UserManager userManager;
     private final SioseApiClient apiClient;
 
-    public GetDataCommand(UserManager userManager, String baseUrl) {
+    public GetDataCommand(UserManager userManager) {
         this.userManager = userManager;
-        this.apiClient = new SioseApiClient(baseUrl);
+        this.apiClient = new SioseApiClient();
     }
     
 
@@ -37,12 +37,17 @@ public class GetDataCommand implements CommandExecutor {
 
         // Use the API client to fetch data
         apiClient.fetchData(token)
-                .thenAccept(response -> {
-                    if (response.isSuccess()) {
-                        player.sendMessage("Data received: " + response.getData());
-                    } else {
-                        player.sendMessage("Failed to fetch data: " + response.getMessage());
+                .thenAccept(user -> {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("Your Profile:\n");
+                    sb.append("Email: ").append(user.getEmail()).append("\n");
+                    if (user.getUsername() != null) {
+                        sb.append("Name: ").append(user.getUsername()).append("\n");
                     }
+                    sb.append("Minecraft Name: ").append(user.getUsername()).append("\n");
+                    sb.append("Role: ").append(user.getStatus()).append("\n");
+                    sb.append("Joined: ").append(user.getRegisteredAt());
+                    player.sendMessage(sb.toString());
                 })
                 .exceptionally(throwable -> {
                     player.sendMessage("Error fetching data: " + throwable.getMessage());
