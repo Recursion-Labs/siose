@@ -17,7 +17,11 @@ public class SioseApiClient {
 
     public SioseApiClient(String baseUrl) {
         this.baseUrl = baseUrl;
-        this.client = new OkHttpClient();
+        this.client = new OkHttpClient.Builder()
+                .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .build();
         this.gson = new Gson();
     }
 
@@ -57,36 +61,42 @@ public class SioseApiClient {
     }
 
     /**
-     * Validate and get user token
+     * Login with token and player data
      * @param uuid Player's UUID
+     * @param username Player's username
      * @param token Authentication token
-     * @return CompletableFuture with validation response
+     * @return CompletableFuture with auth response
      */
-    public CompletableFuture<AuthResponse> validateToken(String uuid, String token) {
+    public CompletableFuture<AuthResponse> login(String uuid, String username, String token) {
         return CompletableFuture.supplyAsync(() -> {
             try {
+                JsonObject minecraftPlayerData = new JsonObject();
+                minecraftPlayerData.addProperty("id", uuid);
+                minecraftPlayerData.addProperty("name", username);
+
                 JsonObject json = new JsonObject();
-                json.addProperty("uuid", uuid);
                 json.addProperty("token", token);
+                json.add("minecraftPlayerData", minecraftPlayerData);
 
                 RequestBody body = RequestBody.create(json.toString(), MediaType.get("application/json"));
                 Request request = new Request.Builder()
-                        .url(this.baseUrl + "/validate")
+                        .url("http://host.docker.internal:3000/v1/auth/minecraft/login")
                         .post(body)
                         .build();
 
                 try (Response response = client.newCall(request).execute()) {
                     if (response.isSuccessful() && response.body() != null) {
                         String responseBody = response.body().string();
+                        logger.info("Login response: {}", responseBody);
                         return gson.fromJson(responseBody, AuthResponse.class);
                     } else {
-                        logger.warn("Token validation failed with code: {}", response.code());
-                        throw new ApiException("Token validation failed: " + response.code());
+                        logger.warn("Login failed with code: {}", response.code());
+                        throw new ApiException("Login failed: " + response.code());
                     }
                 }
             } catch (IOException e) {
-                logger.error("Network error during registration: {}", e.getMessage());
-                throw new ApiException("Network error during registration: " + e.getMessage());
+                logger.error("Network error during login: {}", e.getMessage());
+                throw new ApiException("Network error during login: " + e.getMessage());
             }
         });
     }
@@ -109,7 +119,7 @@ public class SioseApiClient {
                         String responseBody = response.body().string();
                         return gson.fromJson(responseBody, DataResponse.class);
                     } else {
-                        logger.warn("Data fetch failed with code: " + response.code());
+                        logger.warn("Data fetch failed with code: {}", response.code());
                         throw new ApiException("Data fetch failed: " + response.code());
                     }
                 }
@@ -138,7 +148,7 @@ public class SioseApiClient {
                         String responseBody = response.body().string();
                         return gson.fromJson(responseBody, ProfileResponse.class);
                     } else {
-                        logger.warn("Profile fetch failed with code: " + response.code());
+                        logger.warn("Profile fetch failed with code: {}", response.code());
                         throw new ApiException("Profile fetch failed: " + response.code());
                     }
                 }
@@ -171,13 +181,13 @@ public class SioseApiClient {
     }
 
     public static class AuthResponse {
-        private boolean valid;
+        private boolean success;
         private String message;
         private UserData user;
 
         // Getters and setters
-        public boolean isValid() { return valid; }
-        public void setValid(boolean valid) { this.valid = valid; }
+        public boolean isValid() { return success; }
+        public void setValid(boolean valid) { this.success = valid; }
 
         public String getMessage() { return message; }
         public void setMessage(String message) { this.message = message; }
