@@ -333,6 +333,61 @@ public class SioseApiClient {
         public void setMessage(String message) { this.message = message; }
     }
 
+    /**
+     * Get property status by coordinates
+     * @param token User's authentication token
+     * @param coordinates Property coordinates as JSON string
+     * @return CompletableFuture with property status response
+     */
+    public CompletableFuture<PropertyStatusResponse> getPropertyStatus(String token, String coordinates) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                JsonObject json = new JsonObject();
+                json.addProperty("coordinates", coordinates);
+
+                RequestBody body = RequestBody.create(json.toString(), MediaType.get("application/json"));
+                Request request = new Request.Builder()
+                        .url(this.baseUrl + "/user/property-requests/status")
+                        .addHeader("x-minecraft-token", token)
+                        .post(body)
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        String responseBody = response.body().string();
+                        return gson.fromJson(responseBody, PropertyStatusResponse.class);
+                    } else {
+                        logger.warn("Property status check failed with code: {}", response.code());
+                        throw new ApiException("Property status check failed: " + response.code());
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("Network error during property status check: {}", e.getMessage());
+                throw new ApiException("Network error during property status check: " + e.getMessage());
+            }
+        });
+    }
+
+    public static class PropertyStatusResponse {
+        private String status;
+        private String propertyId;
+        private String message;
+        private Object data;
+
+        // Getters and setters
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+
+        public String getPropertyId() { return propertyId; }
+        public void setPropertyId(String propertyId) { this.propertyId = propertyId; }
+
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+
+        public Object getData() { return data; }
+        public void setData(Object data) { this.data = data; }
+    }
+
     public static class PropertyRequestResponse {
         private boolean success;
         private String message;
