@@ -58,21 +58,23 @@ public class CallbackServer {
                 PropertyStatusRequest statusRequest = gson.fromJson(request.body(), PropertyStatusRequest.class);
 
                 if (statusRequest == null || statusRequest.getPropertyId() == null || statusRequest.getStatus() == null) {
+                    plugin.getLogger().warning("Invalid callback request: missing propertyId or status");
                     response.status(400);
                     return gson.toJson(Map.of("error", "Invalid request body. Required: propertyId and status"));
                 }
 
-                // Update property status
-                propertyListener.receivePropertyStatusUpdate(statusRequest.getPropertyId(), statusRequest.getStatus());
-
-                plugin.getLogger().info("Received HTTP callback for property " + statusRequest.getPropertyId() +
+                plugin.getLogger().info("Processing callback request for property " + statusRequest.getPropertyId() +
                                       " with status: " + statusRequest.getStatus());
+
+                // Update property status (this is now thread-safe due to the fix in PropertyListener)
+                propertyListener.receivePropertyStatusUpdate(statusRequest.getPropertyId(), statusRequest.getStatus());
 
                 response.status(200);
                 return gson.toJson(Map.of("success", true, "message", "Property status updated"));
 
             } catch (Exception e) {
                 plugin.getLogger().warning("Error processing callback request: " + e.getMessage());
+                plugin.getLogger().warning("Request body: " + request.body());
                 response.status(500);
                 return gson.toJson(Map.of("error", "Internal server error: " + e.getMessage()));
             }
