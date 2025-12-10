@@ -6,6 +6,7 @@ services:
     command: ["java", "-Xms2G", "-Xmx2G", "-jar", "paper.jar", "--nogui"]
     ports:
       - "25565:25565"
+      - "8080:8080"
 
     environment:
       - SIOSE_API_BASE_URL=https://your-api-endpoint.com

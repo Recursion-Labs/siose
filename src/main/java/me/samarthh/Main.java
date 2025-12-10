@@ -1,5 +1,6 @@
 package me.samarthh;
 
+import me.samarthh.api.CallbackServer;
 import me.samarthh.api.SioseApiClient;
 import me.samarthh.commands.GetDataCommand;
 import me.samarthh.commands.RegisterCommand;
@@ -28,6 +29,7 @@ public class Main extends JavaPlugin {
 
     private UserManager userManager;
     private PropertyListener propertyListener;
+    private CallbackServer callbackServer;
     private Map<UUID, List<Location>> propertyLocations = new HashMap<>();
     private Set<Location> unbreakableBlocks = new HashSet<>();
     private final Path unbreakableBlocksFile;
@@ -63,6 +65,12 @@ public class Main extends JavaPlugin {
         // Register events
         propertyListener = new PropertyListener(userManager, propertyLocations, unbreakableBlocks, this, apiClient, propertyIdMapping);
         getServer().getPluginManager().registerEvents(propertyListener, this);
+
+        // Start callback server
+        int callbackPort = getConfig().getInt("callback.port", 8080);
+        String bindAddress = getConfig().getString("callback.bind-address", "0.0.0.0");
+        callbackServer = new CallbackServer(this, propertyListener, callbackPort, bindAddress);
+        callbackServer.start();
     }
 
     /**
@@ -191,6 +199,11 @@ public class Main extends JavaPlugin {
     @Override
     public void onDisable() {
         getLogger().info("Plugin disabled!");
+
+        // Stop callback server
+        if (callbackServer != null) {
+            callbackServer.stop();
+        }
 
         // Save unbreakable blocks to file
         saveUnbreakableBlocks();
