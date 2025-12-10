@@ -158,40 +158,6 @@ public class SioseApiClient {
             }
         });
     }
-    /**
-     * Request a property
-     * @param token User's authentication token
-     * @param entity Property data
-     * @return CompletableFuture with response
-     */
-    public CompletableFuture<PropertyRequestResponse> requestProperty(String token, String entity) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                JsonObject json = new JsonObject();
-                json.addProperty("entity", entity);
-
-                RequestBody body = RequestBody.create(json.toString(), MediaType.get("application/json"));
-                Request request = new Request.Builder()
-                        .url(this.baseUrl + "/user/property-requests")
-                        .addHeader("x-minecraft-token", token)
-                        .post(body)
-                        .build();
-
-                try (Response response = client.newCall(request).execute()) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        String responseBody = response.body().string();
-                        return gson.fromJson(responseBody, PropertyRequestResponse.class);
-                    } else {
-                        logger.warn("Property request failed with code: {}", response.code());
-                        throw new ApiException("Property request failed: " + response.code());
-                    }
-                }
-            } catch (IOException e) {
-                logger.error("Network error during property request: {}", e.getMessage());
-                throw new ApiException("Network error during property request: " + e.getMessage());
-            }
-        });
-    }
     public static class UserWrapper {
         private UserData user;
 
@@ -388,16 +354,114 @@ public class SioseApiClient {
         public void setData(Object data) { this.data = data; }
     }
 
+    /**
+     * Request property registration
+     * @param token User's authentication token
+     * @param entity Property entity data as JSON string
+     * @return CompletableFuture with property request response
+     */
+    public CompletableFuture<PropertyRequestResponse> requestProperty(String token, String entity) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                JsonObject json = new JsonObject();
+                json.addProperty("entity", entity);
+
+                RequestBody body = RequestBody.create(json.toString(), MediaType.get("application/json"));
+                Request request = new Request.Builder()
+                        .url(this.baseUrl + "/user/property-requests")
+                        .addHeader("x-minecraft-token", token)
+                        .post(body)
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        String responseBody = response.body().string();
+                        logger.info("Property request response: {}", responseBody);
+                        return gson.fromJson(responseBody, PropertyRequestResponse.class);
+                    } else {
+                        logger.warn("Property request failed with code: {}", response.code());
+                        PropertyRequestResponse errorResponse = new PropertyRequestResponse();
+                        errorResponse.setSuccess(false);
+                        errorResponse.setMessage("Request failed with code: " + response.code());
+                        return errorResponse;
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("Network error during property request: {}", e.getMessage());
+                PropertyRequestResponse errorResponse = new PropertyRequestResponse();
+                errorResponse.setSuccess(false);
+                errorResponse.setMessage("Network error: " + e.getMessage());
+                return errorResponse;
+            }
+        });
+    }
+
     public static class PropertyRequestResponse {
         private boolean success;
         private String message;
+        private PropertyRequest request;
 
         // Getters and setters
-        public boolean isSuccess() { return success; }
+        public boolean isSuccess() { 
+            // If success field is not present in JSON, check if we have a successful message
+            return success || (message != null && message.toLowerCase().contains("success"));
+        }
         public void setSuccess(boolean success) { this.success = success; }
 
         public String getMessage() { return message; }
         public void setMessage(String message) { this.message = message; }
+
+        public PropertyRequest getRequest() { return request; }
+        public void setRequest(PropertyRequest request) { this.request = request; }
+
+        // Convenience method to get property ID
+        public String getPropertyId() {
+            return request != null ? request.getId() : null;
+        }
+
+        // For backward compatibility
+        public void setPropertyId(String propertyId) {
+            if (request == null) {
+                request = new PropertyRequest();
+            }
+            request.setId(propertyId);
+        }
+    }
+
+    public static class PropertyRequest {
+        private String id;
+        private String propertyType;
+        private String location;
+        private double price;
+        private String description;
+        private String status;
+        private String createdAt;
+        private String updatedAt;
+
+        // Getters and setters
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+
+        public String getPropertyType() { return propertyType; }
+        public void setPropertyType(String propertyType) { this.propertyType = propertyType; }
+
+        public String getLocation() { return location; }
+        public void setLocation(String location) { this.location = location; }
+
+        public double getPrice() { return price; }
+        public void setPrice(double price) { this.price = price; }
+
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+
+        public String getCreatedAt() { return createdAt; }
+        public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+        public String getUpdatedAt() { return updatedAt; }
+        public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
     }
 
     public static class ApiException extends RuntimeException {
