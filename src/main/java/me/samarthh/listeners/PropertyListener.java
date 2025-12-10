@@ -138,38 +138,41 @@ public class PropertyListener implements Listener {
             return;
         }
 
-        Block block = signLoc.getBlock();
-        if (!(block.getState() instanceof Sign sign)) {
-            plugin.getLogger().warning("Sign not found at location for property: " + propertyId);
-            return;
-        }
-
-        // Update sign on main thread
+        // Update sign on main thread - move ALL block access inside the scheduled task
         Bukkit.getScheduler().runTask(plugin, () -> {
-            SignSide front = sign.getSide(Side.FRONT);
-            front.line(0, Component.text("BrickChain"));
-            front.line(1, Component.text("Property"));
+            try {
+                Block block = signLoc.getBlock();
+                if (!(block.getState() instanceof Sign sign)) {
+                    plugin.getLogger().warning("Sign not found at location for property: " + propertyId + " at " + signLoc);
+                    return;
+                }
 
-            switch (status.toLowerCase()) {
-                case "approved":
-                    front.line(2, Component.text("Approved"));
-                    break;
-                case "rejected":
-                    front.line(2, Component.text("Rejected"));
-                    break;
-                case "pending":
-                    front.line(2, Component.text("Pending"));
-                    break;
-                default:
-                    front.line(2, Component.text(status));
-                    break;
+                SignSide front = sign.getSide(Side.FRONT);
+                front.line(0, Component.text("BrickChain"));
+                front.line(1, Component.text("Property"));
+
+                switch (status.toLowerCase()) {
+                    case "approved":
+                        front.line(2, Component.text("Approved"));
+                        break;
+                    case "rejected":
+                        front.line(2, Component.text("Rejected"));
+                        break;
+                    case "pending":
+                        front.line(2, Component.text("Pending"));
+                        break;
+                    default:
+                        front.line(2, Component.text(status));
+                        break;
+                }
+
+                sign.update();
+                plugin.getLogger().info("Updated property " + propertyId + " status to: " + status);
+            } catch (Exception e) {
+                plugin.getLogger().warning("Error processing callback request: " + e.getMessage());
             }
-
-            sign.update();
         });
-    }
-
-    @EventHandler
+    }    @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
         ItemStack item = event.getItemInHand();
@@ -219,8 +222,22 @@ public class PropertyListener implements Listener {
                                         if (response.isSuccess() || response.getMessage().toLowerCase().contains("successfully")) {
                                             player.sendMessage("Property registration requested.");
 
-                                            // Generate unique property ID
-                                            String propertyId = UUID.randomUUID().toString();
+                                            // Debug logging
+                                            plugin.getLogger().info("API Response - Success: " + response.isSuccess() + ", Message: " + response.getMessage());
+                                            plugin.getLogger().info("API Response - Property ID: " + response.getPropertyId());
+                                            if (response.getRequest() != null) {
+                                                plugin.getLogger().info("API Response - Request ID: " + response.getRequest().getId());
+                                            }
+
+                                            // Use property ID from backend response
+                                            String propertyId = response.getPropertyId();
+                                            if (propertyId == null || propertyId.isEmpty()) {
+                                                // Fallback to generating UUID if backend doesn't return ID
+                                                propertyId = UUID.randomUUID().toString();
+                                                plugin.getLogger().warning("Backend did not return property ID, using generated UUID: " + propertyId);
+                                            } else {
+                                                plugin.getLogger().info("Using property ID from backend: " + propertyId);
+                                            }
 
                                             // Place a sign above the first fence block
                                             Location signLoc = first.clone().add(0, 1, 0);
